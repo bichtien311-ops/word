@@ -6,3 +6,9 @@ __pycache__/
 .env
 .idea/
 .vscode/
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.xls
+~$*.pptx
+~$*.ppt
