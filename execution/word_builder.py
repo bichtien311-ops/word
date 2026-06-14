@@ -25,7 +25,7 @@ from docx.shared import Cm, Pt
 sys.path.insert(0, os.path.dirname(__file__))
 from gost_formatter import (
     GostConfig, DocType, apply_full_gost, add_formula,
-    create_gost_table, add_bibliography, add_figure_caption
+    create_gost_table, add_bibliography, add_figure_caption, add_figure
 )
 from content_processor import (
     ContentBlock, ContentBlockType, structure_content,
@@ -224,6 +224,7 @@ def build_sections(doc: Document, blocks: list[ContentBlock]) -> None:
 
     table_counter = 0
     formula_counter = 0
+    figure_counter = 0
 
     for block in blocks:
         if block.block_type == ContentBlockType.HEADING:
@@ -252,13 +253,18 @@ def build_sections(doc: Document, blocks: list[ContentBlock]) -> None:
                 create_gost_table(doc, headers, rows,
                                   caption=caption, number=str(table_counter))
 
+        elif block.block_type == ContentBlockType.IMAGE:
+            figure_counter += 1
+            caption = block.metadata.get("caption", "")
+            add_figure(doc, block.content, caption, number=str(figure_counter))
+
         elif block.block_type == ContentBlockType.LIST_ITEM:
             para = doc.add_paragraph(block.content, style="List Bullet")
             for run in para.runs:
                 run.font.name = GostConfig.FONT_NAME
                 run.font.size = GostConfig.FONT_SIZE
 
-    log.info(f"Основная часть построена: {table_counter} таблиц, {formula_counter} формул")
+    log.info(f"Основная часть построена: {table_counter} таблиц, {formula_counter} формул, {figure_counter} рисунков")
 
 
 # =============================================================================

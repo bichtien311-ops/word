@@ -32,6 +32,7 @@ class ContentBlockType(str, Enum):
     FORMULA = "formula"
     TABLE = "table"
     LIST_ITEM = "list_item"
+    IMAGE = "image"
     FIGURE_CAPTION = "figure_caption"
     EMPTY = "empty"
 
@@ -276,6 +277,19 @@ def structure_content(text: str) -> list[ContentBlock]:
 
         # --- Пустая строка ---
         if not line:
+            i += 1
+            continue
+
+        # --- Markdown изображение: ![подпись](путь) ---
+        image_match = re.match(r"^!\[(.*)\]\((.+)\)$", line)
+        if image_match:
+            caption = image_match.group(1).strip()
+            path = image_match.group(2).strip()
+            blocks.append(ContentBlock(
+                block_type=ContentBlockType.IMAGE,
+                content=path,
+                metadata={"caption": caption}
+            ))
             i += 1
             continue
 
