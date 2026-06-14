@@ -280,9 +280,9 @@ def structure_content(text: str) -> list[ContentBlock]:
             continue
 
         # --- Markdown заголовки ---
-        heading_match = re.match(r"^(#{1,3})\s+(.+)$", line)
+        heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if heading_match:
-            level = len(heading_match.group(1))
+            level = min(len(heading_match.group(1)), 3)
             blocks.append(ContentBlock(
                 block_type=ContentBlockType.HEADING,
                 content=heading_match.group(2).strip(),
@@ -291,8 +291,8 @@ def structure_content(text: str) -> list[ContentBlock]:
             i += 1
             continue
 
-        # --- Нумерованные заголовки (1.2. Название) ---
-        numbered_heading = re.match(r"^(\d+(?:\.\d+)*)\.\s+(.+)$", line)
+        # --- Нумерованные заголовки только многоуровневые (1.2. Название) ---
+        numbered_heading = re.match(r"^(\d+(?:\.\d+)+)\.?\s+(.+)$", line)
         if numbered_heading:
             num = numbered_heading.group(1)
             level = num.count(".") + 1
@@ -303,6 +303,33 @@ def structure_content(text: str) -> list[ContentBlock]:
                 number=num
             ))
             i += 1
+            continue
+
+        # --- Формула в $$ ... $$ (одно- и многострочная) ---
+        if line.startswith("$$"):
+            inner = line[2:]
+            # Однострочный случай: $$ ... $$
+            if inner.rstrip().endswith("$$") and len(inner.rstrip()) >= 2:
+                latex_body = inner.rstrip()[:-2].strip()
+                i += 1
+            else:
+                formula_lines = [inner] if inner.strip() else []
+                i += 1
+                while i < len(lines) and "$$" not in lines[i]:
+                    formula_lines.append(lines[i])
+                    i += 1
+                if i < len(lines):  # строка с закрывающими $$
+                    closing = lines[i].split("$$", 1)[0]
+                    if closing.strip():
+                        formula_lines.append(closing)
+                    i += 1
+                latex_body = "\n".join(formula_lines).strip()
+            if latex_body:
+                blocks.append(ContentBlock(
+                    block_type=ContentBlockType.FORMULA,
+                    content=latex_body,
+                    metadata={"plain_text": _latex_to_plain(latex_body)}
+                ))
             continue
 
         # --- Блок кода / формулы ---

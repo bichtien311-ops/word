@@ -374,17 +374,20 @@ def create_gost_table(doc: Document, headers: list[str], rows: list[list[str]],
 # =============================================================================
 
 def add_formula(doc: Document, formula_text: str, number: str = None,
-                variables: dict[str, str] = None) -> None:
+                variables: dict[str, str] = None, latex: str = None) -> None:
     """
     Добавляет формулу в документ по ГОСТ:
     - Формула по центру, номер справа в скобках
+    - Если задан latex и доступен нативный рендер — вставляется редактируемая
+      формула Word (OMML); иначе — текстовая запись formula_text (фолбэк)
     - После формулы — пояснение переменных через «где»
 
     Args:
         doc: Документ
-        formula_text: Текст формулы (обычная запись, например "I = S / (√3 · U)")
+        formula_text: Текстовая запись формулы (фолбэк, например "I = S / (√3 · U)")
         number: Номер формулы (например, "1.1")
         variables: Словарь пояснений {"I": "ток, А", "S": "полная мощность, кВА"}
+        latex: Исходная формула в LaTeX для нативного рендера (OMML)
     """
     # Формула по центру с номером справа
     para = doc.add_paragraph()
@@ -393,10 +396,22 @@ def add_formula(doc: Document, formula_text: str, number: str = None,
     para.paragraph_format.space_before = Pt(6)
     para.paragraph_format.space_after = Pt(6)
 
-    run = para.add_run(formula_text)
-    run.font.name = GostConfig.FONT_NAME
-    run.font.size = GostConfig.FONT_SIZE
-    run.font.italic = True
+    omml_inserted = False
+    if latex:
+        try:
+            from omml import latex_to_omml_element
+            omml_el = latex_to_omml_element(latex)
+            if omml_el is not None:
+                para._p.append(omml_el)
+                omml_inserted = True
+        except Exception as e:  # noqa: BLE001
+            log.info(f"OMML недоступен, фолбэк на текст: {e}")
+
+    if not omml_inserted:
+        run = para.add_run(formula_text)
+        run.font.name = GostConfig.FONT_NAME
+        run.font.size = GostConfig.FONT_SIZE
+        run.font.italic = True
 
     # Номер формулы справа
     if number:

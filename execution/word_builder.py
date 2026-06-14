@@ -240,7 +240,8 @@ def build_sections(doc: Document, blocks: list[ContentBlock]) -> None:
             formula_counter += 1
             plain_text = block.metadata.get("plain_text", block.content)
             variables = block.metadata.get("variables", None)
-            add_formula(doc, plain_text, number=str(formula_counter), variables=variables)
+            add_formula(doc, plain_text, number=str(formula_counter),
+                        variables=variables, latex=block.content)
 
         elif block.block_type == ContentBlockType.TABLE:
             table_counter += 1
