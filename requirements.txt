@@ -8,6 +8,11 @@ lxml>=5.0
 pydantic>=2.0
 python-dotenv>=1.0
 
+# Генерация рисунков (схемы и графики)
+matplotlib>=3.8
+schemdraw>=0.19
+pillow>=10.0
+
 # Тестирование
 pytest>=8.0
 

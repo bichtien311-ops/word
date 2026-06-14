@@ -485,6 +485,47 @@ def add_figure_caption(doc: Document, caption_text: str, number: str) -> None:
     log.info(f"Подпись к рисунку: Рисунок {number} — {caption_text}")
 
 
+def add_figure(doc: Document, image_path: str, caption_text: str,
+               number: str, max_width_cm: float = 15.0) -> None:
+    """
+    Вставляет рисунок по ГОСТ: изображение по центру + подпись под ним.
+
+    Args:
+        image_path: Путь к файлу изображения (PNG/JPG).
+        caption_text: Текст подписи (без слова «Рисунок» и номера).
+        number: Номер рисунка (например, "5.1" или "12").
+        max_width_cm: Максимальная ширина изображения, см (по ширине набора А4).
+    """
+    from PIL import Image as _PILImage
+
+    if not os.path.isabs(image_path):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        image_path = os.path.join(root, image_path)
+
+    if not os.path.exists(image_path):
+        log.warning(f"Изображение не найдено, пропуск: {image_path}")
+        return
+
+    pic_para = doc.add_paragraph()
+    pic_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pic_para.paragraph_format.space_before = Pt(12)
+    pic_para.paragraph_format.space_after = Pt(6)
+    run = pic_para.add_run()
+
+    try:
+        with _PILImage.open(image_path) as im:
+            dpi = im.info.get("dpi", (96, 96))[0] or 96
+            width_cm = im.width / dpi * 2.54
+    except Exception:
+        width_cm = max_width_cm
+
+    target_cm = min(width_cm, max_width_cm)
+    run.add_picture(image_path, width=Cm(target_cm))
+
+    add_figure_caption(doc, caption_text, number)
+    log.info(f"Рисунок вставлен: {image_path} (Рисунок {number})")
+
+
 # =============================================================================
 # СПИСОК ЛИТЕРАТУРЫ
 # =============================================================================
