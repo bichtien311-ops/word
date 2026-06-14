@@ -18,9 +18,18 @@ __pycache__/
 *.env
 !.env.example
 
+# IDE
+.idea/
+.vscode/
+
 # Системное
 .DS_Store
 Thumbs.db
 
-# Временные файлы Word
+# Временные файлы Office
 ~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.xls
+~$*.pptx
+~$*.ppt
