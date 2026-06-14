@@ -4,9 +4,6 @@ python-docx>=1.1.0
 docxtpl>=0.16.0
 lxml>=5.0
 
-# Нативный рендер формул LaTeX -> OMML (Office Math)
-latex2mathml>=3.77
-
 # Валидация и конфигурация
 pydantic>=2.0
 python-dotenv>=1.0
