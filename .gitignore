@@ -1,0 +1,26 @@
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Python кеши
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Временные файлы
+.tmp/
+*.log
+
+# Секреты
+.env
+*.env
+!.env.example
+
+# Системное
+.DS_Store
+Thumbs.db
+
+# Временные файлы Word
+~$*.docx
