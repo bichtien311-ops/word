@@ -416,10 +416,13 @@ def clean_notebooklm_output(text: str) -> str:
     """
     result = text
 
-    # Убираем ссылки на источники [Source 1], [1], [source: ...]
+    # Убираем ссылки на источники [Source 1], [1], [1, 2], [2-4], [source: ...]
     result = re.sub(r"\[Source\s*\d+\]", "", result, flags=re.IGNORECASE)
     result = re.sub(r"\[source:\s*[^\]]*\]", "", result, flags=re.IGNORECASE)
-    result = re.sub(r"\[\d+\]", "", result)
+    # Одиночные и составные числовые сноски: [1], [1, 2], [2-4], [10, 11, 15]
+    result = re.sub(r"\[\s*\d+(?:\s*[,\u2013\u2014-]\s*\d+)*\s*\]", "", result)
+    # Висячие пробелы перед знаками препинания после удаления сносок
+    result = re.sub(r"\s+([.,;:])", r"\1", result)
 
     # Убираем маркеры цитат из NotebookLM
     result = re.sub(r"^>\s*", "", result, flags=re.MULTILINE)
@@ -429,6 +432,9 @@ def clean_notebooklm_output(text: str) -> str:
 
     # Убираем trailing spaces
     result = re.sub(r"[ \t]+$", "", result, flags=re.MULTILINE)
+
+    # Схлопываем двойные пробелы (остаются после удаления сносок)
+    result = re.sub(r"(?<=\S)[ \t]{2,}(?=\S)", " ", result)
 
     # Заменяем точки на запятые в числах
     result = fix_numbers(result)
