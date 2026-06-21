@@ -403,6 +403,27 @@ def structure_content(text: str) -> list[ContentBlock]:
 
         # --- Инлайн-формула ---
         if _looks_like_latex(line):
+            # Проверяем, нет ли сразу за ней блока ```latex с такой же формулой
+            lookahead = i + 1
+            while lookahead < len(lines) and not lines[lookahead].strip():
+                lookahead += 1
+            
+            is_duplicate = False
+            if lookahead < len(lines) and lines[lookahead].strip().startswith("```"):
+                # Нашли блок кода, проверяем его содержимое
+                code_i = lookahead + 1
+                code_content = []
+                while code_i < len(lines) and not lines[code_i].strip().startswith("```"):
+                    code_content.append(lines[code_i].strip())
+                    code_i += 1
+                joined_code = "\n".join(code_content).strip()
+                if joined_code == line or _latex_to_plain(joined_code) == _latex_to_plain(line):
+                    is_duplicate = True
+            
+            if is_duplicate:
+                i += 1
+                continue
+
             blocks.append(ContentBlock(
                 block_type=ContentBlockType.FORMULA,
                 content=line,
@@ -429,10 +450,29 @@ def structure_content(text: str) -> list[ContentBlock]:
             paragraph_lines.append(next_line)
             i += 1
 
-        blocks.append(ContentBlock(
-            block_type=ContentBlockType.PARAGRAPH,
-            content=" ".join(paragraph_lines)
-        ))
+        # Проверяем, не дублирует ли этот абзац следующую за ним формулу
+        joined_para = " ".join(paragraph_lines)
+        lookahead = i
+        while lookahead < len(lines) and not lines[lookahead].strip():
+            lookahead += 1
+            
+        is_para_duplicate = False
+        if lookahead < len(lines) and lines[lookahead].strip().startswith("```"):
+            code_i = lookahead + 1
+            code_content = []
+            while code_i < len(lines) and not lines[code_i].strip().startswith("```"):
+                code_content.append(lines[code_i].strip())
+                code_i += 1
+            joined_code = "\n".join(code_content).strip()
+            # Убираем пробелы для строгого сравнения
+            if joined_code.replace(" ", "") == joined_para.replace(" ", "") or _latex_to_plain(joined_code).replace(" ", "") == joined_para.replace(" ", ""):
+                is_para_duplicate = True
+                
+        if not is_para_duplicate:
+            blocks.append(ContentBlock(
+                block_type=ContentBlockType.PARAGRAPH,
+                content=joined_para
+            ))
 
     log.info(f"Структурировано блоков: {len(blocks)} "
              f"(заголовков: {sum(1 for b in blocks if b.block_type == ContentBlockType.HEADING)}, "
